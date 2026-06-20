@@ -60,5 +60,13 @@ export interface GameAction {
 }
 
 export interface CreateGameRequest {
-  gameType: 'TICTACTOE';
+  gameType: string;
 }
+
+export interface AvailableGameType {
+  gameType: string;
+  displayName: string;
+  minPlayers: number;
+  maxPlayers: number;
+}
+

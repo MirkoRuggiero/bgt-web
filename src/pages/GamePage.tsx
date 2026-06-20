@@ -4,17 +4,46 @@ import { useStompClient } from '../hooks/useStompClient';
 import { useAuth } from '../context/AuthContext';
 import { TicTacToeBoard } from '../components/TicTacToeBoard';
 import { ErrorToast } from '../components/ErrorToast';
-import type { GameStateMessage, ErrorMessage } from '../types';
+import type { GameStateMessage, ErrorMessage, AvailableGameType } from '../types';
+
+const GAME_TITLE_MAP: Record<string, string> = {
+  TICTACTOE: 'Tic Tac Toe',
+};
 
 export function GamePage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { subscribe, publish } = useStompClient();
-  const { user } = useAuth();
+  const { user, credentials } = useAuth();
   const [gameState, setGameState] = useState<GameStateMessage | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [gameTitle, setGameTitle] = useState<string>('Game');
   const gameFinishedRef = useRef(false);
   const leftSessionRef = useRef(false);
+
+  // Fetch game title from the API when game state is received
+  useEffect(() => {
+    if (!gameState?.gameType || !credentials) return;
+
+    const title = GAME_TITLE_MAP[gameState.gameType];
+    if (title) {
+      setGameTitle(title);
+      return;
+    }
+
+    const token = btoa(`${credentials.username}:${credentials.password}`);
+    fetch('/api/lobby/game-types', {
+      headers: { Authorization: `Basic ${token}` },
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then((types: AvailableGameType[] | null) => {
+        if (types) {
+          const found = types.find(t => t.gameType === gameState.gameType);
+          if (found) setGameTitle(found.displayName);
+        }
+      })
+      .catch(() => {});
+  }, [gameState?.gameType, credentials]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -121,7 +150,7 @@ export function GamePage() {
 
       {/* Status bar */}
       <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-white mb-2">Tic Tac Toe</h1>
+        <h1 className="text-2xl font-bold text-white mb-2">{gameTitle}</h1>
         {gameState.status !== 'FINISHED' && (
           <p className={`text-lg ${isMyTurn && isPlayer ? 'text-indigo-400 font-semibold' : 'text-gray-400'}`}>
             {statusText}
