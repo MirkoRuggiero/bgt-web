@@ -29,11 +29,45 @@ export interface TicTacToeState {
   winnerId: string | null;
 }
 
+// --- Azul Types ---
+
+export type TileColor = 'BLUE' | 'YELLOW' | 'RED' | 'BLACK' | 'WHITE';
+
+export type AzulSourceType = 'FACTORY' | 'CENTER';
+
+export interface AzulPlayerBoardView {
+  patternLines: (TileColor | null)[][];
+  wall: (TileColor | null)[][];
+  floorLine: (TileColor | null)[];
+  score: number;
+}
+
+export interface AzulState {
+  playerOrder: string[];
+  currentPlayerIndex: number;
+  factories: TileColor[][];
+  centerPile: TileColor[];
+  firstPlayerTokenInCenter: boolean;
+  firstPlayerTokenOwner: string | null;
+  playerBoards: AzulPlayerBoardView[];
+  isSelectionPhase: boolean;
+  gameOver: boolean;
+  winnerId: string | null;
+  winningScore: number;
+}
+
+export interface AzulAction {
+  sourceType: AzulSourceType;
+  factoryIndex: number;
+  tileColor: TileColor;
+  targetPatternLine: number;
+}
+
 export interface GameStateMessage {
   sessionId: string;
   gameType: string;
-  status: 'WAITING' | 'IN_PROGRESS' | 'FINISHED';
-  state: TicTacToeState;
+  status: GameSessionStatus;
+  state: TicTacToeState | AzulState;
   currentTurn: string | null;
   winnerId: string | null;
   isDraw: boolean;
@@ -69,4 +103,3 @@ export interface AvailableGameType {
   minPlayers: number;
   maxPlayers: number;
 }
-

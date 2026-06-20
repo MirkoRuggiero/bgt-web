@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useStompClient } from '../hooks/useStompClient';
 import { useAuth } from '../context/AuthContext';
 import { TicTacToeBoard } from '../components/TicTacToeBoard';
+import { AzulBoard } from '../components/AzulBoard';
 import { ErrorToast } from '../components/ErrorToast';
-import type { GameStateMessage, ErrorMessage, AvailableGameType } from '../types';
+import type { GameStateMessage, ErrorMessage, AvailableGameType, AzulAction, AzulState } from '../types';
 
 const GAME_TITLE_MAP: Record<string, string> = {
   TICTACTOE: 'Tic Tac Toe',
+  AZUL: 'Azul',
 };
 
 export function GamePage() {
@@ -88,6 +90,11 @@ export function GamePage() {
     publish(`/app/game/${sessionId}/action`, { row, col });
   }, [sessionId, publish]);
 
+  const handleAzulAction = useCallback((action: AzulAction) => {
+    if (!sessionId) return;
+    publish(`/app/game/${sessionId}/action`, action);
+  }, [sessionId, publish]);
+
   const handleDismissError = useCallback(() => {
     setErrorMessage(null);
   }, []);
@@ -108,6 +115,34 @@ export function GamePage() {
     );
   }
 
+  // --- Azul rendering ---
+  if (gameState.gameType === 'AZUL') {
+    const azulState = gameState.state as AzulState;
+    const isMyTurn = gameState.currentTurn === user?.id;
+
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <ErrorToast message={errorMessage} onDismiss={handleDismissError} />
+        <AzulBoard
+          state={azulState}
+          playerId={user!.id}
+          isMyTurn={isMyTurn}
+          onAction={handleAzulAction}
+        />
+        {/* Back button */}
+        <div className="flex justify-center pb-6">
+          <button
+            onClick={handleBackToLobby}
+            className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
+          >
+            Back to lobby
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Tic Tac Toe rendering (existing) ---
   const tttState = gameState.state;
   const isMyTurn = gameState.currentTurn === user?.id;
   const isPlayerX = user?.id === tttState.playerX;
